@@ -1,0 +1,50 @@
+run:
+  run_name: "demo"
+  seed: 42
+  device: "auto"
+
+data:
+  main_csv: "data/example_btc.csv"
+  timestamp_col: "timestamp"
+  price_col: "price"
+  freq: "D"
+  log_return: true
+  target_horizon: 1
+  tz: "UTC"
+
+features:
+  lags: [1,2,3]
+  sma_windows: [5,10]
+  ema_windows: [5]
+  rsi_windows: [14]
+  vol_windows: [5]
+  dropna_after_build: true
+
+windows:
+  train: 500
+  val: 100
+  test: 100
+  step: 100
+
+models:
+  classical:
+    - name: "ridge"
+      params: {alpha: [0.1,1.0,10.0]}
+  deep:
+    - name: "lstm"
+      params:
+        lookback: [32]
+        hidden_size: [32]
+        num_layers: [1]
+        dropout: [0.0]
+        batch_size: [64]
+        lr: [0.001]
+        epochs: 10
+        patience: 3
+
+tuning:
+  n_candidates: 2
+
+outputs:
+  out_dir: "results"
+  make_plots: true

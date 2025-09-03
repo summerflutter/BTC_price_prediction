@@ -1,0 +1,83 @@
+# Example config for DAILY data
+run:
+  run_name: "daily_demo"
+  seed: 42
+  device: "auto"     # "cpu", "cuda", or "auto"
+
+data:
+  main_csv: "data/btc_daily.csv"       # path to your BTC csv
+  timestamp_col: "timestamp"
+  price_col: "price"
+  freq: "D"              # "D" for daily, "H" for hourly, "T" for minute
+  log_return: true
+  target_horizon: 1      # predict next-step return
+  tz: "UTC"
+
+features:
+  lags: [1,2,3,5,10,20]
+  sma_windows: [5,10,20,50]
+  ema_windows: [5,10,20]
+  rsi_windows: [14]
+  macd: {fast:12, slow:26, signal:9}
+  vol_windows: [5,10,20] # rolling std of returns
+  dropna_after_build: true
+
+exogenous:  # Optional: left-join by timestamp; files formatted like main_csv
+  enabled: false
+  assets: []  # e.g. [{name: "gold", csv: "data/gold.csv", price_col: "price"}]
+
+# Walk-forward windows in number of rows (i.e., periods at data.freq)
+windows:
+  train: 500
+  val: 100
+  test: 100
+  step: 100   # shift size between windows; default = test
+
+models:
+  classical:
+    - name: "ridge"
+      params:
+        alpha: [0.1, 1.0, 10.0, 100.0]
+    - name: "random_forest"
+      params:
+        n_estimators: [200, 400, 800]
+        max_depth: [5, 10, 20, null]
+        min_samples_leaf: [1, 2, 4]
+    - name: "xgboost"    # skipped if xgboost missing
+      params:
+        n_estimators: [300, 600, 900]
+        max_depth: [3, 5, 8]
+        learning_rate: [0.01, 0.05, 0.1]
+        subsample: [0.7, 0.9, 1.0]
+        colsample_bytree: [0.7, 0.9, 1.0]
+
+  deep:
+    - name: "lstm"
+      params:
+        lookback: [32, 64]
+        hidden_size: [32, 64, 128]
+        num_layers: [1, 2]
+        dropout: [0.0, 0.1]
+        batch_size: [64]
+        lr: [1e-3, 5e-4]
+        epochs: 50
+        patience: 8
+    - name: "transformer"
+      params:
+        lookback: [32, 64]
+        d_model: [64, 128]
+        nhead: [4, 8]
+        num_layers: [2, 3]
+        dim_feedforward: [128, 256]
+        dropout: [0.1]
+        batch_size: [64]
+        lr: [1e-3, 5e-4]
+        epochs: 50
+        patience: 8
+
+tuning:
+  n_candidates: 10   # random param samples per window per model
+
+outputs:
+  out_dir: "results"
+  make_plots: true

@@ -1,0 +1,6 @@
+model
+ridge
+random_forest
+xgboost
+lstm
+transformer
